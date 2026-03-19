@@ -14,10 +14,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "frontend")));
 
 const DATA_FILE = path.join(__dirname, "ideas.json");
+const SETTINGS_FILE = path.join(__dirname, "settings.json");
+
 if (!fs.existsSync(DATA_FILE)) {
   fs.writeFileSync(DATA_FILE, JSON.stringify([]));
 }
+if (!fs.existsSync(SETTINGS_FILE)) {
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify({
+    waNumber: "919876543210",
+    waVisible: true
+  }));
+}
 
+// ===== SUBMIT ROUTE =====
 app.post("/api/submit", (req, res) => {
   try {
     const { fullName, email, phone, projectType, ideaDescription, budgetRange, timeline } = req.body;
@@ -34,15 +43,13 @@ app.post("/api/submit", (req, res) => {
     };
     ideas.push(newIdea);
     fs.writeFileSync(DATA_FILE, JSON.stringify(ideas, null, 2));
-    res.status(201).json({
-      success: true,
-      message: "Your idea has been submitted to Startivo successfully. We will contact you soon!"
-    });
+    res.status(201).json({ success: true, message: "Your idea has been submitted to Startivo successfully. We will contact you soon!" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error. Please try again." });
   }
 });
 
+// ===== ADMIN ROUTES =====
 app.get("/api/admin/ideas", (req, res) => {
   try {
     const secret = req.query.secret;
@@ -71,14 +78,38 @@ app.delete("/api/admin/ideas/:id", (req, res) => {
   }
 });
 
+// ===== WHATSAPP SETTINGS ROUTES =====
+app.get("/api/settings", (req, res) => {
+  try {
+    const settings = JSON.parse(fs.readFileSync(SETTINGS_FILE));
+    res.status(200).json({ success: true, data: settings });
+  } catch (error) {
+    res.status(200).json({ success: true, data: { waNumber: "919876543210", waVisible: true } });
+  }
+});
+
+app.post("/api/admin/settings", (req, res) => {
+  try {
+    const secret = req.query.secret;
+    if (secret !== process.env.ADMIN_SECRET) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const { waNumber, waVisible } = req.body;
+    const settings = { waNumber, waVisible };
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+    res.status(200).json({ success: true, message: "Settings saved!" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+// ===== PAGES =====
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });
-
 app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "admin.html"));
 });
-
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });

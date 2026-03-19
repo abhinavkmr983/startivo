@@ -1,27 +1,28 @@
 // ===== STARTIVO CONFIG =====
 const API_URL = "/api/submit";
 
-// ===== WHATSAPP SETTINGS FROM ADMIN =====
-function applyWaSettings() {
-  const number = localStorage.getItem("wa_number") || "919876543210";
-  const visible = localStorage.getItem("wa_visible") !== "false";
-
-  const waFloat = document.getElementById("whatsappFloat");
-  if (waFloat) {
-    waFloat.style.display = visible ? "flex" : "none";
-    waFloat.href = `https://wa.me/${number}?text=Hi Startivo, I want to build a website`;
-  }
-
-  document.querySelectorAll('a[href*="wa.me"]').forEach(link => {
-    if (link.id === "whatsappFloat" || link.classList.contains("whatsapp-btn") || link.classList.contains("btn-whatsapp-small")) {
-      const textPart = link.href.includes("?text=") ? link.href.split("?text=")[1] : "Hi Startivo, I want to build a website";
-      link.href = `https://wa.me/${number}?text=${textPart}`;
+// ===== WHATSAPP SETTINGS FROM SERVER =====
+async function applyWaSettings() {
+  try {
+    const res = await fetch("/api/settings");
+    const data = await res.json();
+    if (!data.success) return;
+    const { waNumber, waVisible } = data.data;
+    const waFloat = document.getElementById("whatsappFloat");
+    if (waFloat) {
+      waFloat.style.display = waVisible ? "flex" : "none";
+      waFloat.href = `https://wa.me/${waNumber}?text=Hi Startivo, I want to build a website`;
     }
-  });
+    document.querySelectorAll(".whatsapp-btn").forEach(link => {
+      link.href = `https://wa.me/${waNumber}?text=Hi Startivo, I want to build a website`;
+    });
+    document.querySelectorAll(".btn-whatsapp-small").forEach(link => {
+      link.href = `https://wa.me/${waNumber}?text=Hi Startivo, I just submitted my idea!`;
+    });
+  } catch (e) {}
 }
 
 applyWaSettings();
-window.addEventListener("storage", applyWaSettings);
 
 // ===== MOBILE MENU =====
 const navHamburger = document.getElementById("navHamburger");
@@ -87,46 +88,17 @@ const errorBannerText = document.getElementById("errorBannerText");
 function validateForm(data) {
   let valid = true;
   clearErrors();
-
-  if (!data.fullName.trim()) {
-    showError("nameError", "Full name is required.");
-    valid = false;
-  } else if (data.fullName.trim().length < 2) {
-    showError("nameError", "Name must be at least 2 characters.");
-    valid = false;
-  }
-
+  if (!data.fullName.trim()) { showError("nameError", "Full name is required."); valid = false; }
+  else if (data.fullName.trim().length < 2) { showError("nameError", "Name must be at least 2 characters."); valid = false; }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!data.email.trim()) {
-    showError("emailError", "Email address is required.");
-    valid = false;
-  } else if (!emailRegex.test(data.email)) {
-    showError("emailError", "Please enter a valid email address.");
-    valid = false;
-  }
-
+  if (!data.email.trim()) { showError("emailError", "Email address is required."); valid = false; }
+  else if (!emailRegex.test(data.email)) { showError("emailError", "Please enter a valid email address."); valid = false; }
   const phoneRegex = /^[0-9+\-\s()]{7,15}$/;
-  if (!data.phone.trim()) {
-    showError("phoneError", "Phone number is required.");
-    valid = false;
-  } else if (!phoneRegex.test(data.phone)) {
-    showError("phoneError", "Please enter a valid phone number.");
-    valid = false;
-  }
-
-  if (!data.projectType) {
-    showError("typeError", "Please select a project type.");
-    valid = false;
-  }
-
-  if (!data.ideaDescription.trim()) {
-    showError("descError", "Please describe your idea.");
-    valid = false;
-  } else if (data.ideaDescription.trim().length < 20) {
-    showError("descError", "Description must be at least 20 characters.");
-    valid = false;
-  }
-
+  if (!data.phone.trim()) { showError("phoneError", "Phone number is required."); valid = false; }
+  else if (!phoneRegex.test(data.phone)) { showError("phoneError", "Please enter a valid phone number."); valid = false; }
+  if (!data.projectType) { showError("typeError", "Please select a project type."); valid = false; }
+  if (!data.ideaDescription.trim()) { showError("descError", "Please describe your idea."); valid = false; }
+  else if (data.ideaDescription.trim().length < 20) { showError("descError", "Description must be at least 20 characters."); valid = false; }
   return valid;
 }
 
@@ -145,7 +117,6 @@ function clearErrors() {
 // ===== FORM SUBMIT =====
 ideaForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-
   const data = {
     fullName: document.getElementById("fullName").value,
     email: document.getElementById("email").value,
@@ -155,21 +126,16 @@ ideaForm.addEventListener("submit", async (e) => {
     budgetRange: document.getElementById("budgetRange").value,
     timeline: document.getElementById("timeline").value,
   };
-
   if (!validateForm(data)) return;
-
   setLoading(true);
   errorBanner.classList.add("hidden");
-
   try {
     const response = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-
     const result = await response.json();
-
     if (result.success) {
       ideaForm.classList.add("hidden");
       successMsg.classList.remove("hidden");
@@ -178,7 +144,7 @@ ideaForm.addEventListener("submit", async (e) => {
       showBannerError(result.message || "Submission failed. Please try again.");
     }
   } catch (err) {
-    showBannerError("Network error. Please make sure the Startivo server is running.");
+    showBannerError("Network error. Please try again.");
   } finally {
     setLoading(false);
   }
