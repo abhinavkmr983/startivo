@@ -11,12 +11,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "frontend")));
 
-// Frontend path fix
-const frontendPath = path.join(__dirname, "../frontend");
-app.use(express.static(frontendPath));
-
-// Data file
 const DATA_FILE = path.join(__dirname, "ideas.json");
 if (!fs.existsSync(DATA_FILE)) {
   fs.writeFileSync(DATA_FILE, JSON.stringify([]));
@@ -76,19 +72,18 @@ app.delete("/api/admin/ideas/:id", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+  res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });
 
 app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/admin.html"));
+  res.sendFile(path.join(__dirname, "frontend", "admin.html"));
 });
 
-// Catch all
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+  res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Startivo Server Running on port ${PORT}!`);
+  console.log(`✅ Startivo Running on port ${PORT}!`);
 });
