@@ -11,10 +11,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "../frontend")));
 
+// Frontend path fix
+const frontendPath = path.join(__dirname, "../frontend");
+app.use(express.static(frontendPath));
+
+// Data file
 const DATA_FILE = path.join(__dirname, "ideas.json");
-
 if (!fs.existsSync(DATA_FILE)) {
   fs.writeFileSync(DATA_FILE, JSON.stringify([]));
 }
@@ -22,11 +25,9 @@ if (!fs.existsSync(DATA_FILE)) {
 app.post("/api/submit", (req, res) => {
   try {
     const { fullName, email, phone, projectType, ideaDescription, budgetRange, timeline } = req.body;
-
     if (!fullName || !email || !phone || !projectType || !ideaDescription) {
       return res.status(400).json({ success: false, message: "Please fill all required fields." });
     }
-
     const ideas = JSON.parse(fs.readFileSync(DATA_FILE));
     const newIdea = {
       _id: Date.now().toString(),
@@ -35,10 +36,8 @@ app.post("/api/submit", (req, res) => {
       timeline: timeline || "Not specified",
       submittedAt: new Date().toISOString()
     };
-
     ideas.push(newIdea);
     fs.writeFileSync(DATA_FILE, JSON.stringify(ideas, null, 2));
-
     res.status(201).json({
       success: true,
       message: "Your idea has been submitted to Startivo successfully. We will contact you soon!"
@@ -84,7 +83,12 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/admin.html"));
 });
 
-app.listen(process.env.PORT || 5000, () => {
-  console.log("✅ Startivo Server Running!");
-  console.log(`🚀 Open: http://localhost:5000`);
+// Catch all
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ Startivo Server Running on port ${PORT}!`);
 });
