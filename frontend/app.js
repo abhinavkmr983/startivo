@@ -1,29 +1,6 @@
 // ===== STARTIVO CONFIG =====
 const API_URL = "/api/submit";
 
-// ===== WHATSAPP SETTINGS FROM SERVER =====
-async function applyWaSettings() {
-  try {
-    const res = await fetch("/api/settings");
-    const data = await res.json();
-    if (!data.success) return;
-    const { waNumber, waVisible } = data.data;
-    const waFloat = document.getElementById("whatsappFloat");
-    if (waFloat) {
-      waFloat.style.display = waVisible ? "flex" : "none";
-      waFloat.href = `https://wa.me/${waNumber}?text=Hi Startivo, I want to build a website`;
-    }
-    document.querySelectorAll(".whatsapp-btn").forEach(link => {
-      link.href = `https://wa.me/${waNumber}?text=Hi Startivo, I want to build a website`;
-    });
-    document.querySelectorAll(".btn-whatsapp-small").forEach(link => {
-      link.href = `https://wa.me/${waNumber}?text=Hi Startivo, I just submitted my idea!`;
-    });
-  } catch (e) {}
-}
-
-applyWaSettings();
-
 // ===== MOBILE MENU =====
 const navHamburger = document.getElementById("navHamburger");
 const mobileMenu = document.getElementById("mobileMenu");
