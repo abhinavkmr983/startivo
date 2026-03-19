@@ -1,6 +1,27 @@
-// ===== STARTIVO CONFIG — CHANGE THESE =====
-const WHATSAPP_NUMBER = "919876543210"; // Replace with your WhatsApp number
+// ===== STARTIVO CONFIG =====
 const API_URL = "/api/submit";
+
+// ===== WHATSAPP SETTINGS FROM ADMIN =====
+function applyWaSettings() {
+  const number = localStorage.getItem("wa_number") || "919876543210";
+  const visible = localStorage.getItem("wa_visible") !== "false";
+
+  const waFloat = document.getElementById("whatsappFloat");
+  if (waFloat) {
+    waFloat.style.display = visible ? "flex" : "none";
+    waFloat.href = `https://wa.me/${number}?text=Hi Startivo, I want to build a website`;
+  }
+
+  document.querySelectorAll('a[href*="wa.me"]').forEach(link => {
+    if (link.id === "whatsappFloat" || link.classList.contains("whatsapp-btn") || link.classList.contains("btn-whatsapp-small")) {
+      const textPart = link.href.includes("?text=") ? link.href.split("?text=")[1] : "Hi Startivo, I want to build a website";
+      link.href = `https://wa.me/${number}?text=${textPart}`;
+    }
+  });
+}
+
+applyWaSettings();
+window.addEventListener("storage", applyWaSettings);
 
 // ===== MOBILE MENU =====
 const navHamburger = document.getElementById("navHamburger");
@@ -152,7 +173,6 @@ ideaForm.addEventListener("submit", async (e) => {
     if (result.success) {
       ideaForm.classList.add("hidden");
       successMsg.classList.remove("hidden");
-      // Scroll to success message
       successMsg.scrollIntoView({ behavior: "smooth", block: "center" });
     } else {
       showBannerError(result.message || "Submission failed. Please try again.");
